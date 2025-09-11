@@ -358,6 +358,7 @@ export const useGame = create<GameStore>()(
         isGameOver: false,
         sessionMistakes: 0
       });
+    },
 
     saveGame: async () => {
       const state = get();
