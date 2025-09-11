@@ -28,6 +28,8 @@ export const Game: React.FC<GameProps> = ({ difficulty: initialDifficulty, onBac
     elapsedTime,
     isComplete,
     isPaused,
+    isGameOver,
+    sessionMistakes,
     difficulty,
     score,
     hintsUsed,
@@ -45,7 +47,8 @@ export const Game: React.FC<GameProps> = ({ difficulty: initialDifficulty, onBac
     pauseGame,
     resumeGame,
     loadGame,
-    updateTimer
+    updateTimer,
+    resetGameOver
   } = useGame();
 
   // Convert ExtendedDifficulty to Difficulty for the game engine
@@ -66,19 +69,19 @@ export const Game: React.FC<GameProps> = ({ difficulty: initialDifficulty, onBac
 
   // Handle game completion
   useEffect(() => {
-    if (isComplete && !showDifficultySelect) {
+    if (isComplete && !showDifficultySelect && !isGameOver) {
       // Record the win in progress
       recordWin(initialDifficulty, elapsedTime);
     }
-  }, [isComplete, showDifficultySelect, recordWin, initialDifficulty, elapsedTime]);
+  }, [isComplete, showDifficultySelect, isGameOver, recordWin, initialDifficulty, elapsedTime]);
 
   // Timer effect
   useEffect(() => {
-    if (!isPaused && !isComplete) {
+    if (!isPaused && !isComplete && !isGameOver) {
       const interval = setInterval(updateTimer, 1000);
       return () => clearInterval(interval);
     }
-  }, [updateTimer, isPaused, isComplete]);
+  }, [updateTimer, isPaused, isComplete, isGameOver]);
 
   const handleNumberSelect = (value: CellValue) => {
     setNumber(value);
@@ -125,7 +128,7 @@ export const Game: React.FC<GameProps> = ({ difficulty: initialDifficulty, onBac
   // 键盘事件处理
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (isComplete || isPaused) return;
+      if (isComplete || isPaused || isGameOver) return;
       
       const key = e.key;
       if (key >= '1' && key <= '9') {
@@ -137,7 +140,7 @@ export const Game: React.FC<GameProps> = ({ difficulty: initialDifficulty, onBac
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [isComplete, isPaused, clearCell]);
+  }, [isComplete, isPaused, isGameOver, clearCell]);
 
   return (
     <div className="h-screen bg-gray-100 flex flex-col overflow-hidden safe-area-inset no-select">
@@ -230,7 +233,7 @@ export const Game: React.FC<GameProps> = ({ difficulty: initialDifficulty, onBac
 
               <Keypad
                 onNumberSelect={handleNumberSelect}
-                disabled={isComplete}
+                disabled={isComplete || isGameOver}
                 selectedNumber={selectedValue}
               />
             </div>
@@ -240,6 +243,10 @@ export const Game: React.FC<GameProps> = ({ difficulty: initialDifficulty, onBac
 
       {showDifficultySelect && (
         <DifficultySelect onSelect={handleNewGameSelect} />
+      )}
+
+      {isGameOver && (
+        <GameOver onNewGame={handleGameOverNewGame} />
       )}
 
       {isComplete && !showDifficultySelect && (
