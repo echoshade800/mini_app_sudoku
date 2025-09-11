@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import { Grid } from '../components/Grid';
 import { Keypad } from '../components/Keypad';
 import { Toolbar } from '../components/Toolbar';
@@ -6,10 +7,17 @@ import { GameHeader } from '../components/GameHeader';
 import { GameComplete } from '../components/GameComplete';
 import { DifficultySelect } from '../components/DifficultySelect';
 import { useGame } from '../store/useGame';
-import type { CellValue, Difficulty } from '../types/game';
+import { useProgress } from '../store/useProgress';
+import type { CellValue, Difficulty, ExtendedDifficulty } from '../types/game';
 
-export const Game: React.FC = () => {
+interface GameProps {
+  difficulty: ExtendedDifficulty;
+  onBack: () => void;
+}
+
+export const Game: React.FC<GameProps> = ({ difficulty: initialDifficulty, onBack }) => {
   const [showDifficultySelect, setShowDifficultySelect] = useState(false);
+  const { recordWin } = useProgress();
   
   const {
     board,
@@ -40,17 +48,29 @@ export const Game: React.FC = () => {
     updateTimer
   } = useGame();
 
+  // Convert ExtendedDifficulty to Difficulty for the game engine
+  const gameDifficulty: Difficulty = initialDifficulty === 'Master' ? 'Expert' : initialDifficulty as Difficulty;
+
   // Load saved game on mount
   useEffect(() => {
     const loadSavedGame = async () => {
       const loaded = await loadGame();
       if (!loaded) {
-        setShowDifficultySelect(true);
+        // Start new game with the provided difficulty
+        startNewGame(gameDifficulty);
       }
     };
     
     loadSavedGame();
-  }, [loadGame]);
+  }, [loadGame, gameDifficulty, startNewGame]);
+
+  // Handle game completion
+  useEffect(() => {
+    if (isComplete && !showDifficultySelect) {
+      // Record the win in progress
+      recordWin(initialDifficulty, elapsedTime);
+    }
+  }, [isComplete, showDifficultySelect, recordWin, initialDifficulty, elapsedTime]);
 
   // Timer effect
   useEffect(() => {
@@ -64,17 +84,15 @@ export const Game: React.FC = () => {
     setNumber(value);
   };
 
-  const handleNewGameSelect = (selectedDifficulty: Difficulty) => {
-    startNewGame(selectedDifficulty);
+  const handleNewGameSelect = (selectedDifficulty: ExtendedDifficulty) => {
+    const newGameDifficulty: Difficulty = selectedDifficulty === 'Master' ? 'Expert' : selectedDifficulty as Difficulty;
+    startNewGame(newGameDifficulty);
     setShowDifficultySelect(false);
   };
 
   const handleNewGame = () => {
     setShowDifficultySelect(true);
-    // 重置游戏完成状态，隐藏祝贺弹窗
-    // 注意：这里不需要手动重置 isComplete，因为 startNewGame 会重置所有状态
   };
-
 
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < history.length - 1;
@@ -123,16 +141,59 @@ export const Game: React.FC = () => {
 
   return (
     <div className="h-screen bg-gray-100 flex flex-col overflow-hidden safe-area-inset no-select">
-      <GameHeader
-        difficulty={difficulty}
-        mistakes={mistakes}
-        maxMistakes={maxMistakes}
-        score={score}
-        elapsedTime={elapsedTime}
-        isPaused={isPaused}
-        onPause={pauseGame}
-        onResume={resumeGame}
-      />
+      <div className="bg-white shadow-sm border-b border-gray-200 p-3 pb-2">
+        <div className="max-w-sm mx-auto">
+          <div className="flex items-center gap-3 mb-3">
+            <button
+              onClick={onBack}
+              className="p-2 active:bg-gray-100 rounded-full transition-colors touch-manipulation"
+            >
+              <ArrowLeft size={20} className="text-gray-600" />
+            </button>
+            <h1 className="text-xl font-bold text-gray-800">
+              {initialDifficulty}
+            </h1>
+          </div>
+          
+          <div className="grid grid-cols-4 gap-2 text-center">
+            <div>
+              <p className="text-xs text-gray-500 mb-0.5">Mistakes</p>
+              <p className={`font-semibold text-sm text-red-600`}>
+                {mistakes}
+              </p>
+            </div>
+            
+            <div>
+              <p className="text-xs text-gray-500 mb-0.5">Score</p>
+              <p className="font-semibold text-sm text-gray-800">{score}</p>
+            </div>
+            
+            <div>
+              <p className="text-xs text-gray-500 mb-0.5">Time</p>
+              <div className="flex items-center justify-center gap-2">
+                <p className="font-semibold text-sm text-gray-800">
+                  {Math.floor(elapsedTime / 60)}:{(elapsedTime % 60).toString().padStart(2, '0')}
+                </p>
+                <button
+                  onClick={isPaused ? resumeGame : pauseGame}
+                  className="p-1 active:bg-gray-100 rounded-full transition-colors touch-manipulation"
+                >
+                  {isPaused ? (
+                    <span className="text-green-600 text-xs">▶</span>
+                  ) : (
+                    <span className="text-gray-600 text-xs">⏸</span>
+                  )}
+                </button>
+              </div>
+            </div>
+            
+            <div>
+              <p className="text-xs text-gray-500 mb-0.5">Hints</p>
+              <p className="font-semibold text-sm text-gray-800">{hintsRemaining}</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="flex-1 flex flex-col justify-center p-3 space-y-3 overflow-hidden">
         {isPaused ? (
@@ -183,7 +244,7 @@ export const Game: React.FC = () => {
 
       {isComplete && !showDifficultySelect && (
         <GameComplete
-          difficulty={difficulty}
+          difficulty={initialDifficulty}
           elapsedTime={elapsedTime}
           mistakes={mistakes}
           score={score}

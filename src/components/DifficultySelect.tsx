@@ -1,16 +1,16 @@
 import React from 'react';
-import type { Difficulty } from '../types/game';
+import type { ExtendedDifficulty } from '../types/game';
 
 interface DifficultySelectProps {
-  onSelect: (difficulty: Difficulty) => void;
+  onSelect: (difficulty: ExtendedDifficulty) => void;
 }
 
-const difficulties: { level: Difficulty; description: string }[] = [
-  { level: 'Beginner', description: 'Perfect for first-time players' },
+const difficulties: { level: ExtendedDifficulty; description: string }[] = [
   { level: 'Easy', description: 'Great for learning the basics' },
   { level: 'Medium', description: 'A balanced challenge' },
   { level: 'Hard', description: 'For experienced players' },
-  { level: 'Expert', description: 'Ultimate challenge' }
+  { level: 'Expert', description: 'Ultimate challenge' },
+  { level: 'Master', description: 'Legendary difficulty' }
 ];
 
 export const DifficultySelect: React.FC<DifficultySelectProps> = ({ onSelect }) => {

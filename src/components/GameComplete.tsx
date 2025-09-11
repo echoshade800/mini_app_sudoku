@@ -1,10 +1,10 @@
 import React from 'react';
 import { Trophy, RotateCcw } from 'lucide-react';
 import dayjs from 'dayjs';
-import type { Difficulty } from '../types/game';
+import type { ExtendedDifficulty } from '../types/game';
 
 interface GameCompleteProps {
-  difficulty: Difficulty;
+  difficulty: ExtendedDifficulty;
   elapsedTime: number;
   mistakes: number;
   score: number;

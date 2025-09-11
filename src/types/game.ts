@@ -11,6 +11,30 @@ export type Board = Cell[];
 
 export type Difficulty = 'Beginner' | 'Easy' | 'Medium' | 'Hard' | 'Expert';
 
+export type ExtendedDifficulty = 'Easy' | 'Medium' | 'Hard' | 'Expert' | 'Master';
+
+export type Achievement = 
+  | 'Daycare' 
+  | 'Kindergarten' 
+  | 'Elementary School' 
+  | 'Middle School' 
+  | 'High School' 
+  | 'University' 
+  | 'Graduate School' 
+  | 'Genius';
+
+export interface DifficultyStats {
+  totalWins: number;
+  bestTime: number | null;
+}
+
+export interface PlayerProgress {
+  stats: Record<ExtendedDifficulty, DifficultyStats>;
+  unlockedDifficulties: Set<ExtendedDifficulty>;
+  achievement: Achievement;
+  rankPoints: number;
+}
+
 export interface GameState {
   board: Board;
   solution: Board;
