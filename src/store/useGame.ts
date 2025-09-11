@@ -16,8 +16,6 @@ interface GameHistory {
 interface GameStore extends GameState {
   history: GameHistory[];
   historyIndex: number;
-  sessionMistakes: number;
-  isGameOver: boolean;
   
   // Actions
   startNewGame: (difficulty: Difficulty) => void;
@@ -35,7 +33,6 @@ interface GameStore extends GameState {
   loadGame: () => Promise<boolean>;
   clearAllData: () => Promise<void>;
   updateTimer: () => void;
-  resetGameOver: () => void;
 }
 
 const createEmptyBoard = (): Board => {
@@ -62,9 +59,7 @@ const initialState: GameState = {
   hintsUsed: 0,
   maxHints: 3,
   autoNotes: false,
-  pausedElapsedTime: 0,
-  sessionMistakes: 0,
-  isGameOver: false
+  pausedElapsedTime: 0
 };
 
 export const useGame = create<GameStore>()(
@@ -99,9 +94,7 @@ export const useGame = create<GameStore>()(
                      difficulty === 'Medium' ? 6 : 
                      difficulty === 'Hard' ? 4 : 3,
         autoNotes: difficulty === 'Beginner',
-        pausedElapsedTime: 0,
-        sessionMistakes: 0,
-        isGameOver: false
+        pausedElapsedTime: 0
       };
 
       set({
@@ -144,7 +137,7 @@ export const useGame = create<GameStore>()(
 
     setNumber: (value: CellValue) => {
       const state = get();
-      if (state.isComplete || state.isPaused || state.isGameOver || state.selectedCell === null) return;
+      if (state.isComplete || state.isPaused || state.selectedCell === null) return;
 
       const cell = state.board[state.selectedCell];
       if (cell.fixed) return;
@@ -182,8 +175,6 @@ export const useGame = create<GameStore>()(
       let newMistakes = state.mistakes;
       let newScore = state.score;
       let isComplete = false;
-      let newSessionMistakes = state.sessionMistakes;
-      let isGameOver = false;
 
       // Check if this move is incorrect
       if (value !== 0 && !state.isNotesMode) {
@@ -192,22 +183,9 @@ export const useGame = create<GameStore>()(
         
         if (value !== correctValue) {
           newMistakes++;
-          newSessionMistakes++;
-          
-          // Check for game over (3 mistakes)
-          if (newSessionMistakes >= 3) {
-            isGameOver = true;
-            analytics.track('game_over', { 
-              difficulty: state.difficulty, 
-              mistakes: newSessionMistakes,
-              time: state.elapsedTime
-            });
-          }
-          
           analytics.track('mistake', { 
             difficulty: state.difficulty, 
-            mistakes: newMistakes,
-            sessionMistakes: newSessionMistakes
+            mistakes: newMistakes 
           });
         } else if (previousValue !== correctValue) {
           // Only add score if this is a new correct value (not repeating the same correct value)
@@ -225,43 +203,34 @@ export const useGame = create<GameStore>()(
 
       // Check if puzzle is complete
       const isFilled = boardWithConflicts.every(cell => cell.value !== 0);
-      if (isFilled && validation.isValid && !isGameOver) {
+      if (isFilled && validation.isValid) {
         isComplete = true;
         analytics.track('game_finish', {
           difficulty: state.difficulty,
           time: state.elapsedTime,
           mistakes: newMistakes,
           hints: state.hintsUsed,
-          score: newScore,
-          sessionMistakes: newSessionMistakes
+          score: newScore
         });
       }
 
       // Save to history
-      let newHistory = state.history;
-      let newHistoryIndex = state.historyIndex;
-      
-      if (!isGameOver) {
-        newHistory = state.history.slice(0, state.historyIndex + 1);
-        newHistory.push({
-          board: boardWithConflicts,
-          selectedCell: state.selectedCell,
-          isNotesMode: state.isNotesMode,
-          mistakes: newMistakes,
-          score: newScore
-        });
-        newHistoryIndex = newHistory.length - 1;
-      }
+      const newHistory = state.history.slice(0, state.historyIndex + 1);
+      newHistory.push({
+        board: boardWithConflicts,
+        selectedCell: state.selectedCell,
+        isNotesMode: state.isNotesMode,
+        mistakes: newMistakes,
+        score: newScore
+      });
 
       set({
         board: boardWithConflicts,
         mistakes: newMistakes,
         score: newScore,
         isComplete,
-        isGameOver,
-        sessionMistakes: newSessionMistakes,
         history: newHistory,
-        historyIndex: newHistoryIndex
+        historyIndex: newHistory.length - 1
       });
 
       get().saveGame();
@@ -275,7 +244,7 @@ export const useGame = create<GameStore>()(
 
     toggleAutoNotes: () => {
       const state = get();
-      if (state.isComplete || state.isPaused || state.isGameOver) return;
+      if (state.isComplete || state.isPaused) return;
       set({ autoNotes: !state.autoNotes });
     },
 
@@ -347,17 +316,10 @@ export const useGame = create<GameStore>()(
 
     updateTimer: () => {
       const state = get();
-      if (!state.isPaused && !state.isComplete && !state.isGameOver) {
+      if (!state.isPaused && !state.isComplete) {
         const elapsed = Math.floor((Date.now() - state.startTime) / 1000);
         set({ elapsedTime: elapsed });
       }
-    },
-
-    resetGameOver: () => {
-      set({ 
-        isGameOver: false,
-        sessionMistakes: 0
-      });
     },
 
     saveGame: async () => {
@@ -417,9 +379,7 @@ export const useGame = create<GameStore>()(
             ...gameData,
             board,
             solution,
-            history,
-            sessionMistakes: gameData.sessionMistakes || 0,
-            isGameOver: gameData.isGameOver || false
+            history
           });
 
           return true;
@@ -439,9 +399,7 @@ export const useGame = create<GameStore>()(
         set({
           ...initialState,
           history: [],
-          historyIndex: -1,
-          sessionMistakes: 0,
-          isGameOver: false
+          historyIndex: -1
         });
         
         analytics.track('clear_all_data');
