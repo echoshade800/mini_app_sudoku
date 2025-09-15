@@ -361,7 +361,7 @@ export const useGame = create<GameStore>()(
         autoNotes: state.autoNotes,
         pausedElapsedTime: state.pausedElapsedTime,
         history: state.history,
-        historyIndex: state.historyIndex
+        historyIndex: state.historyIndex,
         isGameOver: state.isGameOver
       };
 
