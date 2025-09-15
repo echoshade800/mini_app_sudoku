@@ -399,7 +399,7 @@ export const useGame = create<GameStore>()(
             ...gameData,
             board,
             solution,
-            history
+            history,
             isGameOver: gameData.isGameOver || false
           });
 
