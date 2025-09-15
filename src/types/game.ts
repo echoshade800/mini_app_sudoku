@@ -52,4 +52,5 @@ export interface GameState {
   maxHints: number;
   autoNotes: boolean;
   pausedElapsedTime?: number;
+  isGameOver: boolean;
 }

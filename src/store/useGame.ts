@@ -60,6 +60,7 @@ const initialState: GameState = {
   maxHints: 3,
   autoNotes: false,
   pausedElapsedTime: 0
+  isGameOver: false
 };
 
 export const useGame = create<GameStore>()(
@@ -95,6 +96,7 @@ export const useGame = create<GameStore>()(
                      difficulty === 'Hard' ? 4 : 3,
         autoNotes: difficulty === 'Beginner',
         pausedElapsedTime: 0
+        isGameOver: false
       };
 
       set({
@@ -137,7 +139,7 @@ export const useGame = create<GameStore>()(
 
     setNumber: (value: CellValue) => {
       const state = get();
-      if (state.isComplete || state.isPaused || state.selectedCell === null) return;
+      if (state.isComplete || state.isPaused || state.isGameOver || state.selectedCell === null) return;
 
       const cell = state.board[state.selectedCell];
       if (cell.fixed) return;
@@ -175,6 +177,7 @@ export const useGame = create<GameStore>()(
       let newMistakes = state.mistakes;
       let newScore = state.score;
       let isComplete = false;
+      let isGameOver = false;
 
       // Check if this move is incorrect
       if (value !== 0 && !state.isNotesMode) {
@@ -183,6 +186,12 @@ export const useGame = create<GameStore>()(
         
         if (value !== correctValue) {
           newMistakes++;
+          
+          // Check for game over condition (3 mistakes)
+          if (newMistakes >= 3) {
+            isGameOver = true;
+          }
+          
           analytics.track('mistake', { 
             difficulty: state.difficulty, 
             mistakes: newMistakes 
@@ -229,22 +238,32 @@ export const useGame = create<GameStore>()(
         mistakes: newMistakes,
         score: newScore,
         isComplete,
+        isGameOver,
         history: newHistory,
         historyIndex: newHistory.length - 1
       });
+
+      // Track game over event
+      if (isGameOver) {
+        analytics.track('game_over', {
+          difficulty: state.difficulty,
+          time: state.elapsedTime,
+          mistakes: newMistakes
+        });
+      }
 
       get().saveGame();
     },
 
     toggleNotesMode: () => {
       const state = get();
-      if (state.isComplete || state.isPaused) return;
+      if (state.isComplete || state.isPaused || state.isGameOver) return;
       set({ isNotesMode: !state.isNotesMode });
     },
 
     toggleAutoNotes: () => {
       const state = get();
-      if (state.isComplete || state.isPaused) return;
+      if (state.isComplete || state.isPaused || state.isGameOver) return;
       set({ autoNotes: !state.autoNotes });
     },
 
@@ -278,7 +297,7 @@ export const useGame = create<GameStore>()(
 
     useHint: () => {
       const state = get();
-      if (state.isComplete || state.isPaused || state.hintsUsed >= state.maxHints) return;
+      if (state.isComplete || state.isPaused || state.isGameOver || state.hintsUsed >= state.maxHints) return;
 
       const solver = new SudokuSolver(state.board);
       const hint = solver.getHint(state.board);
@@ -316,7 +335,7 @@ export const useGame = create<GameStore>()(
 
     updateTimer: () => {
       const state = get();
-      if (!state.isPaused && !state.isComplete) {
+      if (!state.isPaused && !state.isComplete && !state.isGameOver) {
         const elapsed = Math.floor((Date.now() - state.startTime) / 1000);
         set({ elapsedTime: elapsed });
       }
@@ -343,6 +362,7 @@ export const useGame = create<GameStore>()(
         pausedElapsedTime: state.pausedElapsedTime,
         history: state.history,
         historyIndex: state.historyIndex
+        isGameOver: state.isGameOver
       };
 
       try {
@@ -380,6 +400,7 @@ export const useGame = create<GameStore>()(
             board,
             solution,
             history
+            isGameOver: gameData.isGameOver || false
           });
 
           return true;
