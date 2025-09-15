@@ -95,7 +95,7 @@ export const useGame = create<GameStore>()(
                      difficulty === 'Medium' ? 6 : 
                      difficulty === 'Hard' ? 4 : 3,
         autoNotes: difficulty === 'Beginner',
-        pausedElapsedTime: 0
+        pausedElapsedTime: 0,
         isGameOver: false
       };
 
