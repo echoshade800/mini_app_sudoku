@@ -59,7 +59,7 @@ const initialState: GameState = {
   hintsUsed: 0,
   maxHints: 3,
   autoNotes: false,
-  pausedElapsedTime: 0
+  pausedElapsedTime: 0,
   isGameOver: false
 };
 
