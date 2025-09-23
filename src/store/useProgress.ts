@@ -108,24 +108,24 @@ export const useProgress = create<ProgressStore>()(
         rankPoints: state.rankPoints
       };
 
-      console.log('Saving progress:', progressData);
+      console.log('Saving game statistics:', progressData);
       try {
-        const success = StorageUtils.setData({ progress: progressData });
+        const success = StorageUtils.setData({ gameStats: progressData });
         if (success) {
-          console.log('Progress saved successfully using StorageUtils');
+          console.log('Game statistics saved successfully using StorageUtils');
         } else {
-          console.warn('Failed to save progress using StorageUtils');
+          console.warn('Failed to save game statistics using StorageUtils');
         }
       } catch (error) {
-        console.warn('Failed to save progress:', error);
+        console.warn('Failed to save game statistics:', error);
       }
     },
 
     loadProgress: async () => {
       try {
         const savedData = StorageUtils.getData();
-        if (savedData && savedData.progress) {
-          const progressData = savedData.progress;
+        if (savedData && savedData.gameStats) {
+          const progressData = savedData.gameStats;
           set({
             stats: progressData.stats || createInitialStats(),
             unlockedDifficulties: new Set(progressData.unlockedDifficulties || ['Easy', 'Medium']),
@@ -135,30 +135,30 @@ export const useProgress = create<ProgressStore>()(
           
           // Ensure unlocked difficulties are up to date
           get().updateUnlockedDifficulties();
-          console.log('Progress loaded successfully using StorageUtils');
+          console.log('Game statistics loaded successfully using StorageUtils');
         } else {
-          console.log('No progress data found, using initial state');
+          console.log('No game statistics found, using initial state');
         }
       } catch (error) {
-        console.warn('Failed to load progress:', error);
+        console.warn('Failed to load game statistics:', error);
       }
     },
 
     clearProgress: async () => {
       try {
-        const success = StorageUtils.setData({ progress: null });
+        const success = StorageUtils.setData({ gameStats: null });
         if (success) {
           set({
             ...initialState,
             unlockedDifficulties: new Set(['Easy', 'Medium'])
           });
           analytics.track('progress_cleared');
-          console.log('Progress cleared successfully using StorageUtils');
+          console.log('Game statistics cleared successfully using StorageUtils');
         } else {
-          console.warn('Failed to clear progress using StorageUtils');
+          console.warn('Failed to clear game statistics using StorageUtils');
         }
       } catch (error) {
-        console.warn('Failed to clear progress:', error);
+        console.warn('Failed to clear game statistics:', error);
       }
     }
   }))

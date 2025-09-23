@@ -28,6 +28,11 @@ export const Me: React.FC<MeProps> = ({ onBack }) => {
 
   const currentStats = stats[activeTab];
 
+  // Debug: Log current stats
+  useEffect(() => {
+    console.log('Me.tsx - Current stats:', { activeTab, currentStats, allStats: stats });
+  }, [activeTab, currentStats, stats]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 safe-area-inset">
       {/* Header */}

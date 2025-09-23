@@ -3,8 +3,7 @@ import { subscribeWithSelector } from 'zustand/middleware';
 import type { GameState, Board, CellValue, Difficulty } from '../types/game';
 import { SudokuGenerator } from '../logic/generator';
 import { SudokuSolver, validateBoard } from '../logic/solver';
-import { analytics } from '../bridge/dot';
-import StorageUtils from '../utils/StorageUtils';
+import { storage, analytics } from '../bridge/dot';
 
 interface GameHistory {
   board: Board;
@@ -367,22 +366,17 @@ export const useGame = create<GameStore>()(
       };
 
       try {
-        const success = StorageUtils.setData({ currentGame: gameData });
-        if (success) {
-          console.log('Game saved successfully using StorageUtils');
-        } else {
-          console.warn('Failed to save game using StorageUtils');
-        }
+        await storage.set('sudoku/current', gameData);
+        console.log('Current game progress saved successfully');
       } catch (error) {
-        console.warn('Failed to save game:', error);
+        console.warn('Failed to save current game progress:', error);
       }
     },
 
     loadGame: async () => {
       try {
-        const savedData = StorageUtils.getData();
-        if (savedData && savedData.currentGame) {
-          const gameData = savedData.currentGame;
+        const gameData = await storage.get('sudoku/current');
+        if (gameData) {
           // Reconstruct Sets in notes
           const board = gameData.board.map((cell: any) => ({
             ...cell,
@@ -420,23 +414,20 @@ export const useGame = create<GameStore>()(
 
     clearAllData: async () => {
       try {
-        // 清除所有存储的数据
-        const success = StorageUtils.setData({ currentGame: null });
-        if (success) {
-          // 重置游戏状态到初始状态
-          set({
-            ...initialState,
-            history: [],
-            historyIndex: -1
-          });
-          
-          analytics.track('clear_all_data');
-          console.log('All game data cleared successfully using StorageUtils');
-        } else {
-          console.warn('Failed to clear game data using StorageUtils');
-        }
+        // 清除当前游戏进度数据
+        await storage.set('sudoku/current', null);
+        
+        // 重置游戏状态到初始状态
+        set({
+          ...initialState,
+          history: [],
+          historyIndex: -1
+        });
+        
+        analytics.track('clear_all_data');
+        console.log('Current game progress cleared successfully');
       } catch (error) {
-        console.warn('Failed to clear game data:', error);
+        console.warn('Failed to clear current game progress:', error);
       }
     }
   }))

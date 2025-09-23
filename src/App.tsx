@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Game } from './pages/Game';
 import { Main } from './pages/Main';
 import { Me } from './pages/Me';
+import { useProgress } from './store/useProgress';
 import type { ExtendedDifficulty } from './types/game';
 
 type AppState = 'main' | 'game' | 'me';
@@ -9,6 +10,12 @@ type AppState = 'main' | 'game' | 'me';
 function App() {
   const [currentPage, setCurrentPage] = useState<AppState>('main');
   const [selectedDifficulty, setSelectedDifficulty] = useState<ExtendedDifficulty>('Easy');
+  const { loadProgress } = useProgress();
+
+  // Load progress data when app starts
+  useEffect(() => {
+    loadProgress();
+  }, [loadProgress]);
 
   const handleDifficultySelect = (difficulty: ExtendedDifficulty) => {
     setSelectedDifficulty(difficulty);

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Trophy, RotateCcw } from 'lucide-react';
-import dayjs from 'dayjs';
 import type { ExtendedDifficulty } from '../types/game';
+import { formatTime } from '../utils/achievements';
 
 interface GameCompleteProps {
   difficulty: ExtendedDifficulty;
@@ -20,10 +20,6 @@ export const GameComplete: React.FC<GameCompleteProps> = ({
   hintsUsed,
   onNewGame
 }) => {
-  const formatTime = (seconds: number): string => {
-    const duration = dayjs.duration(seconds, 'seconds');
-    return duration.format(seconds >= 3600 ? 'H:mm:ss' : 'm:ss');
-  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 safe-area-inset">
