@@ -11,8 +11,8 @@ class StorageUtils {
    */
   static getData(): any | null {
     try {
-      console.log('get data from storage', `${this.miniAppName}info`);
-      const savedData = localStorage.getItem(`${this.miniAppName}info`);
+      console.log('get data from storage', `${this.miniAppName}`);
+      const savedData = localStorage.getItem(`${this.miniAppName}`);
       if (savedData) {
         return JSON.parse(savedData);
       }
@@ -30,7 +30,7 @@ class StorageUtils {
    */
   static setData(newData: any): boolean {
     try {
-      console.log('set data to storage', `${this.miniAppName}info`);
+      console.log('set data to storage', `${this.miniAppName}`);
       // 先读取老数据
       const oldData = this.getData();
       
@@ -38,7 +38,7 @@ class StorageUtils {
       const mergedData = oldData ? { ...oldData, ...newData } : newData;
       
       // 保存合并后的数据
-      localStorage.setItem(`${this.miniAppName}info`, JSON.stringify(mergedData));
+      localStorage.setItem(`${this.miniAppName}`, JSON.stringify(mergedData));
       return true;
     } catch (error) {
       console.error('设置info信息失败:', error);
@@ -52,7 +52,7 @@ class StorageUtils {
    */
   static removeData(): boolean {
     try {
-      localStorage.removeItem(`${this.miniAppName}info`);
+      localStorage.removeItem(`${this.miniAppName}`);
       return true;
     } catch (error) {
       console.error('删除localStorage数据失败:', error);
