@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import type { ExtendedDifficulty, Achievement, PlayerProgress, DifficultyStats } from '../types/game';
-import { storage, analytics } from '../bridge/dot';
+import { analytics } from '../bridge/dot';
+import StorageUtils from '../utils/StorageUtils';
 import { 
   calculateRankPoints, 
   getAchievementFromPoints, 
@@ -37,6 +38,7 @@ export const useProgress = create<ProgressStore>()(
     ...initialState,
 
     recordWin: async (difficulty: ExtendedDifficulty, time: number) => {
+      console.log('recordWin called with:', { difficulty, time });
       const state = get();
       const newStats = { ...state.stats };
       
@@ -106,8 +108,14 @@ export const useProgress = create<ProgressStore>()(
         rankPoints: state.rankPoints
       };
 
+      console.log('Saving progress:', progressData);
       try {
-        await storage.set('sudoku/progress', progressData);
+        const success = StorageUtils.setData({ progress: progressData });
+        if (success) {
+          console.log('Progress saved successfully using StorageUtils');
+        } else {
+          console.warn('Failed to save progress using StorageUtils');
+        }
       } catch (error) {
         console.warn('Failed to save progress:', error);
       }
@@ -115,8 +123,9 @@ export const useProgress = create<ProgressStore>()(
 
     loadProgress: async () => {
       try {
-        const progressData = await storage.get('sudoku/progress');
-        if (progressData) {
+        const savedData = StorageUtils.getData();
+        if (savedData && savedData.progress) {
+          const progressData = savedData.progress;
           set({
             stats: progressData.stats || createInitialStats(),
             unlockedDifficulties: new Set(progressData.unlockedDifficulties || ['Easy', 'Medium']),
@@ -126,6 +135,9 @@ export const useProgress = create<ProgressStore>()(
           
           // Ensure unlocked difficulties are up to date
           get().updateUnlockedDifficulties();
+          console.log('Progress loaded successfully using StorageUtils');
+        } else {
+          console.log('No progress data found, using initial state');
         }
       } catch (error) {
         console.warn('Failed to load progress:', error);
@@ -134,12 +146,17 @@ export const useProgress = create<ProgressStore>()(
 
     clearProgress: async () => {
       try {
-        await storage.set('sudoku/progress', null);
-        set({
-          ...initialState,
-          unlockedDifficulties: new Set(['Easy', 'Medium'])
-        });
-        analytics.track('progress_cleared');
+        const success = StorageUtils.setData({ progress: null });
+        if (success) {
+          set({
+            ...initialState,
+            unlockedDifficulties: new Set(['Easy', 'Medium'])
+          });
+          analytics.track('progress_cleared');
+          console.log('Progress cleared successfully using StorageUtils');
+        } else {
+          console.warn('Failed to clear progress using StorageUtils');
+        }
       } catch (error) {
         console.warn('Failed to clear progress:', error);
       }

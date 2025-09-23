@@ -70,6 +70,7 @@ export const Game: React.FC<GameProps> = ({ difficulty: initialDifficulty, onBac
   useEffect(() => {
     if (isComplete && !showDifficultySelect && !isGameOver) {
       // Record the win in progress
+      console.log('Recording win:', { difficulty: initialDifficulty, time: elapsedTime });
       recordWin(initialDifficulty, elapsedTime);
     }
   }, [isComplete, showDifficultySelect, isGameOver, recordWin, initialDifficulty, elapsedTime]);
@@ -211,6 +212,15 @@ export const Game: React.FC<GameProps> = ({ difficulty: initialDifficulty, onBac
             >
               Resume
             </button>
+          </div>
+        ) : isComplete || isGameOver ? (
+          <div className="max-w-sm mx-auto bg-white rounded-xl shadow-lg p-6 text-center">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">
+              {isComplete ? 'Game Complete!' : 'Game Over'}
+            </h3>
+            <p className="text-gray-600 mb-4">
+              {isComplete ? 'Congratulations on completing the puzzle!' : 'Better luck next time!'}
+            </p>
           </div>
         ) : (
           <>
