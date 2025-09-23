@@ -96,6 +96,10 @@ export const Game: React.FC<GameProps> = ({ difficulty: initialDifficulty, onBac
     setShowDifficultySelect(true);
   };
 
+  const handleGameOverNewGame = () => {
+    setShowDifficultySelect(true);
+  };
+
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < history.length - 1;
   const hintsRemaining = maxHints - hintsUsed;
@@ -255,8 +259,8 @@ export const Game: React.FC<GameProps> = ({ difficulty: initialDifficulty, onBac
         />
       )}
 
-      {isGameOver && (
-        <GameOver onNewGame={onBack} />
+      {isGameOver && !showDifficultySelect && (
+        <GameOver onNewGame={handleGameOverNewGame} />
       )}
     </div>
   );
